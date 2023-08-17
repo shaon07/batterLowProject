@@ -1,24 +1,18 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import Papa from "papaparse";
 import { useState } from "react";
-import { Button, Card, Container, Form, Table } from "react-bootstrap";
+import { Button, Card, Container, Form } from "react-bootstrap";
 import "./App.css";
+import TableData from "./components/table";
 
 const tempInputClass = "mb-3 d-flex flex-column align-items-start";
 const allowedExtensions = ["csv"];
 
 function App() {
   const [formStepLevel, setFormStepLevel] = useState(1);
-  const [csvFile, setCsvFile] = useState("");
-  const [csvData, setCsvData] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // let maxX = -Infinity;
-  // let maxY = -Infinity;
-  // let maxZ = -Infinity;
-  // let minX = Infinity;
-  // let minY = Infinity;
-  // let minZ = Infinity;
+  const [mainData, setMainData] = useState([]);
 
   const [formState, setFormState] = useState({
     projectName: "",
@@ -38,8 +32,20 @@ function App() {
     if (formStepLevel === 1) {
       setFormStepLevel(2);
     } else {
-      console.log(formState);
-      handleParse();
+      setMainData([...mainData, formState]);
+      setFormStepLevel(1);
+      setFormState({
+        projectName: "",
+        projectDescription: "",
+        client: "",
+        contractor: "",
+        max_X: -Infinity,
+        min_X: Infinity,
+        max_Y: -Infinity,
+        min_Y: Infinity,
+        max_Z: -Infinity,
+        min_Z: Infinity,
+      })
     }
   };
 
@@ -52,34 +58,38 @@ function App() {
   };
 
   const handleFileChange = (e) => {
-    setError("");
+    try {
+      setError("");
+      setLoading(true);
+      // Check if user has entered the file
+      if (e.target.files.length) {
+        const inputFile = e.target.files[0];
 
-    // Check if user has entered the file
-    if (e.target.files.length) {
-      const inputFile = e.target.files[0];
+        // Check the file extensions, if it not
+        // included in the allowed extensions
+        // we show the error
+        const fileExtension = inputFile?.type.split("/")[1];
+        if (!allowedExtensions.includes(fileExtension)) {
+          setError("Please input a csv file");
+          return;
+        }
 
-      // Check the file extensions, if it not
-      // included in the allowed extensions
-      // we show the error
-      const fileExtension = inputFile?.type.split("/")[1];
-      if (!allowedExtensions.includes(fileExtension)) {
-        setError("Please input a csv file");
-        return;
+        // If input type is correct set the state
+        setTimeout(() => {
+          handleParse(inputFile);
+        }, 1000);
       }
-
-      // If input type is correct set the state
-      setCsvFile(inputFile);
+    } catch (error) {
+      setError("There is an error");
+    } finally {
+      setLoading(false);
     }
-    setTimeout(() => {
-      console.log("hello")
-      handleParse()
-    }, 1000);
   };
 
-  const handleParse = () => {
+  const handleParse = (data) => {
     // If user clicks the parse button without
     // a file we show a error
-    if (!csvFile) return setError("Enter a valid file");
+    if (!data) return setError("Enter a valid file");
 
     // Initialize a reader which allows user
     // to read any file or blob.
@@ -97,9 +107,10 @@ function App() {
       let minY = parsedData[0].Y;
       let maxZ = parsedData[0].Z;
       let minZ = parsedData[0].Z;
+
       for (let i = 1; i < parsedData.length; i++) {
         const obj = parsedData[i];
-      
+
         // Update maxX and minX
         if (obj.X > maxX) {
           maxX = obj.X;
@@ -107,7 +118,7 @@ function App() {
         if (obj.X < minX) {
           minX = obj.X;
         }
-      
+
         // Update maxY and minY
         if (obj.Y > maxY) {
           maxY = obj.Y;
@@ -115,7 +126,7 @@ function App() {
         if (obj.Y < minY) {
           minY = obj.Y;
         }
-      
+
         // Update maxZ and minZ
         if (obj.Z > maxZ) {
           maxZ = obj.Z;
@@ -132,19 +143,13 @@ function App() {
         max_Y: maxY,
         min_Y: minY,
         max_Z: maxZ,
-        min_Z: minZ
-      })
+        min_Z: minZ,
+      });
 
-      setCsvData(parsedData);
     };
-    reader.readAsText(csvFile);
+    reader.readAsText(data);
   };
 
-  const stepOneValue =
-    !!formState.projectName &&
-    !!formState.projectDescription &&
-    !!formState.client &&
-    !!formState.contractor;
 
   return (
     <Container className="App">
@@ -208,17 +213,20 @@ function App() {
           {formStepLevel === 2 && <hr />}
 
           {formStepLevel === 2 && (
-            <Form.Group className={`${tempInputClass}`}>
-              <Form.Label>Upload CSV</Form.Label>
-              <Form.Control
-                name="csvFile"
-                type="file"
-                placeholder="Enter Contractor"
-                // value={csvFile}
-                onChange={handleFileChange}
-                required
-              />
-            </Form.Group>
+            <>
+              <Form.Group className={`${tempInputClass}`}>
+                <Form.Label>Upload CSV</Form.Label>
+                <Form.Control
+                  name="csvFile"
+                  type="file"
+                  placeholder="Enter Contractor"
+                  // value={csvFile}
+                  onChange={handleFileChange}
+                />
+              </Form.Group>
+              {loading && <small> "Uploading..."</small>}
+              {error && <small> {error}</small>}
+            </>
           )}
 
           {formStepLevel === 2 && (
@@ -230,7 +238,7 @@ function App() {
                 placeholder="Enter MAX_X"
                 value={formState.max_X || ""}
                 onChange={handleChange}
-                // required
+                required
               />
             </Form.Group>
           )}
@@ -244,7 +252,7 @@ function App() {
                 placeholder="Enter MIN_X"
                 value={formState.min_X || ""}
                 onChange={handleChange}
-                // required
+                required
               />
             </Form.Group>
           )}
@@ -258,7 +266,7 @@ function App() {
                 placeholder="Enter MAX_Y"
                 value={formState.max_Y || ""}
                 onChange={handleChange}
-                // required
+                required
               />
             </Form.Group>
           )}
@@ -272,7 +280,7 @@ function App() {
                 placeholder="Enter MIN_Y"
                 value={formState.min_Y || ""}
                 onChange={handleChange}
-                // required
+                required
               />
             </Form.Group>
           )}
@@ -286,7 +294,7 @@ function App() {
                 placeholder="Enter MAX_Z"
                 value={formState.max_Z || ""}
                 onChange={handleChange}
-                // required
+                required
               />
             </Form.Group>
           )}
@@ -300,7 +308,7 @@ function App() {
                 placeholder="Enter MIN_Z"
                 value={formState.min_Z || ""}
                 onChange={handleChange}
-                // required
+                required
               />
             </Form.Group>
           )}
@@ -311,35 +319,9 @@ function App() {
         </Form>
       </Card>
 
-      <Table striped>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Username</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>1</td>
-            <td>Mark</td>
-            <td>Otto</td>
-            <td>@mdo</td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>Jacob</td>
-            <td>Thornton</td>
-            <td>@fat</td>
-          </tr>
-          <tr>
-            <td>3</td>
-            <td colSpan={2}>Larry the Bird</td>
-            <td>@twitter</td>
-          </tr>
-        </tbody>
-      </Table>
+      <Card className="p-3 m-3">
+        <TableData data={mainData} />
+      </Card>
     </Container>
   );
 }
