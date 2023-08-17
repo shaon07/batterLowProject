@@ -29,7 +29,7 @@ export default function TableData({ data }) {
             <th>Project Description</th>
             <th>Client</th>
             <th>Contractor</th>
-            <th>KP</th>
+            {/* <th>KP</th> */}
             <th>max_X</th>
             <th>min_X</th>
             <th>max_Y</th>
@@ -47,7 +47,7 @@ export default function TableData({ data }) {
                 <td>{item?.projectDescription}</td>
                 <td>{item?.client}</td>
                 <td>{item?.contractor}</td>
-                <td>{index}</td>
+                {/* <td>{index}</td> */}
                 <td>{item?.max_X}</td>
                 <td>{item?.min_X}</td>
                 <td>{item?.max_Y}</td>
