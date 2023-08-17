@@ -1,10 +1,28 @@
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import React from "react";
-import { Table } from "react-bootstrap";
+import { Button, Table } from "react-bootstrap";
 
 export default function TableData({ data }) {
+  const downloadPdfDocument = (rootElementId) => {
+    const input = document.getElementById(rootElementId);
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("l", "mm", "a4");
+      pdf.addImage(imgData, "JPEG", 0, 0);
+      pdf.save("download.pdf");
+    });
+  };
+
   return (
     <>
-      <Table striped>
+      <div>
+        <Button variant="success" onClick={() => downloadPdfDocument("table")}>
+          Download PDF
+        </Button>
+      </div>
+      <hr />
+      <Table striped id="table">
         <thead>
           <tr>
             <th>Project Name</th>
