@@ -59,7 +59,7 @@ export default function TableData({ data }) {
         </tbody>
       </Table>
 
-      {data.length < 1 && (
+      {Array.isArray(data) && data.length < 1 && (
         <>
           <center>
             <pre>No Data Found</pre>
