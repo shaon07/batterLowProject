@@ -41,7 +41,7 @@ export default function TableData({ data }) {
         <tbody>
           {Array.isArray(data) &&
             data.length > 0 &&
-            data.map((item, index) => (
+            [...data].reverse().map((item, index) => (
               <tr>
                 <td>{item?.projectName}</td>
                 <td>{item?.projectDescription}</td>
